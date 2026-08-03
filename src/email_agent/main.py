@@ -1,13 +1,15 @@
 from dotenv import load_dotenv
 
-from email_agent.agent_server import graph
-
 
 def main() -> None:
     """Start the application."""
     load_dotenv()
 
+    # 这一句放在后面，保障openai和langsmith环境变量等先加载完
+    from email_agent.agent_server import graph
+
     print("Agent Demo started successfully.")
+
     email_request = {
         "to": "Robert Xu <Robert@company.com>",
         "author": "Team Lead <teamlead@company.com>",
