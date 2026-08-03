@@ -9,6 +9,7 @@ dependencies = [
     "langchain-openai>=1.4.1",
     "langgraph>=1.2.10",
     "langsmith>=0.10.15",
+    "pyobjc-framework-eventkit>=12.2.1",
     "python-dotenv>=1.2.2",
 ]
 
