@@ -20,6 +20,7 @@ dev = ["pyright>=1.1.411", "pytest>=9.1.1", "pytest-cov>=7.1.0", "ruff>=0.16.1"]
 
 [project.scripts]
 email-agent = "email_agent.main:main"
+email-agent-draw-graph = "email_agent.draw_graph:main"
 
 [build-system]
 requires = ["uv_build>=0.12.0,<0.13"]
