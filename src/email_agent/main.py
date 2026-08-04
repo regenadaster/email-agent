@@ -3,13 +3,14 @@ from uuid import uuid4
 from dotenv import load_dotenv
 from langgraph.types import Command
 
+load_dotenv()
+from email_agent.agent_server import create_graph
+
 
 def main() -> None:
     """Start the application."""
-    load_dotenv()
 
-    # 这一句放在后面，保障openai和langsmith环境变量等先加载完
-    from email_agent.agent_server import graph
+    graph = create_graph()
 
     config = {
         "configurable": {
