@@ -4,7 +4,7 @@ from typing import Literal
 from langchain_core.language_models.chat_models import (
     BaseChatModel,
 )
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 from typing_extensions import TypedDict
@@ -117,6 +117,8 @@ def create_graph(
     triage_model: BaseChatModel | None = None,
     action_model: BaseChatModel | None = None,
     context: AgentContext | None = None,
+    *,
+    checkpointer: BaseCheckpointSaver,
 ):
     triage_llm = (
         triage_model
@@ -180,5 +182,5 @@ def create_graph(
     builder.add_edge("book_event", END)
 
     return builder.compile(
-        checkpointer=InMemorySaver(),
+        checkpointer=checkpointer,
     )

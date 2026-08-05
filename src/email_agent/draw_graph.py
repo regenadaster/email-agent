@@ -29,7 +29,7 @@ def main() -> None:
     mermaid_path = output_path.with_suffix(".mmd")
 
     graph = create_graph()
-    drawable_graph = graph.get_graph()
+    drawable_graph = graph.get_graph(xray=True)
 
     # Mermaid 源码可以离线生成
     mermaid_text = drawable_graph.draw_mermaid()
