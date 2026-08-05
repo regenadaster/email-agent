@@ -12,11 +12,13 @@ class ModelSettings(BaseSettings):
         extra="ignore",
     )
 
-    triage_model: str = "openai:gpt-5.5"
+    triage_model: str = "gpt-5.5"
     triage_temperature: float = 0.0
     triage_timeout_seconds: float = 300
     triage_max_tokens: int = 2000
     triage_max_retries: int = 3
+    triage_use_responses_api: bool = True
+    triage_store: bool = True
 
 
 @cache

@@ -11,10 +11,7 @@ from typing_extensions import TypedDict
 
 from email_agent.app_state import GraphState
 from email_agent.calendar_service import book_calendar_event
-from email_agent.llm import (
-    ModelPurpose,
-    get_chat_model,
-)
+from email_agent.llm import ModelPurpose, get_chat_model
 from email_agent.triage.node import create_triage_node
 
 
@@ -92,9 +89,7 @@ def route_after_triage(
     return "end"
 
 
-def create_graph(
-    triage_model: BaseChatModel | None = None,
-):
+def create_graph(triage_model: BaseChatModel | None = None):
     model = (
         triage_model
         if triage_model is not None
@@ -103,15 +98,9 @@ def create_graph(
 
     builder = StateGraph(GraphState)
 
-    builder.add_node(
-        "triage_router",
-        create_triage_node(model),
-    )
+    builder.add_node("triage_router", create_triage_node(model))
 
-    builder.add_node(
-        "request_approval",
-        request_approval,
-    )
+    builder.add_node("request_approval", request_approval)
 
     builder.add_node("book_event", book_event)
 
