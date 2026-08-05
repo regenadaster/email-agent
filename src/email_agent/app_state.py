@@ -11,21 +11,22 @@ class GraphState(TypedDict, total=False):
         "respond",
         "notify",
     ]
-
     classification_reason: str
+    classification_confidence: float
 
     calendar_action: Literal[
         "none",
         "needs_clarification",
         "propose",
     ]
-
     calendar_draft: dict | None
+    calendar_available: bool | None
+    calendar_conflicts: list[dict]
 
-    approval: Literal[
-        "approve",
-        "reject",
-    ]
+    reply_draft: dict | None
+    clarification_question: str | None
+    action_evidence: list[str]
 
+    approval: Literal["approve", "reject"]
     event_id: str
     calendar_error: str | None

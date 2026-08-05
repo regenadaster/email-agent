@@ -9,9 +9,14 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 from typing_extensions import TypedDict
 
+from email_agent.action.node import create_action_node
 from email_agent.app_state import GraphState
 from email_agent.calendar_service import book_calendar_event
 from email_agent.llm import ModelPurpose, get_chat_model
+from email_agent.runtime_context import (
+    AgentContext,
+    create_default_agent_context,
+)
 from email_agent.triage.node import create_triage_node
 
 
@@ -74,41 +79,89 @@ def book_event(state: GraphState) -> dict:
 
 def route_after_triage(
     state: GraphState,
-) -> Literal["approval", "end"]:
-    draft = state.get("calendar_draft")
+) -> Literal["action", "end"]:
+    needs_reply = state.get("classification_decision") == "respond"
 
-    if (
-        state.get("calendar_action") == "propose"
-        and draft
-        and not draft.get("missing_fields")
-        and draft.get("start_time")
-        and draft.get("end_time")
-    ):
-        return "approval"
+    needs_calendar_processing = state.get("calendar_action") != "none"
+
+    if needs_reply or needs_calendar_processing:
+        return "action"
 
     return "end"
 
 
-def create_graph(triage_model: BaseChatModel | None = None):
-    model = (
+def route_after_action(
+    state: GraphState,
+) -> Literal["approval", "end"]:
+    draft = state.get("calendar_draft")
+
+    if not draft:
+        return "end"
+
+    if state.get("calendar_available") is False:
+        return "end"
+
+    if draft.get("missing_fields"):
+        return "end"
+
+    if not draft.get("start_time"):
+        return "end"
+
+    if not draft.get("end_time"):
+        return "end"
+
+    return "approval"
+
+
+def create_graph(
+    triage_model: BaseChatModel | None = None,
+    action_model: BaseChatModel | None = None,
+    context: AgentContext | None = None,
+):
+    triage_llm = (
         triage_model
         if triage_model is not None
         else get_chat_model(ModelPurpose.TRIAGE)
     )
 
+    action_llm = action_model or triage_llm
+
+    if context is None:
+        context = create_default_agent_context()
+
     builder = StateGraph(GraphState)
 
-    builder.add_node("triage_router", create_triage_node(model))
-
-    builder.add_node("request_approval", request_approval)
-
-    builder.add_node("book_event", book_event)
+    builder.add_node(
+        "triage_router",
+        create_triage_node(triage_llm),
+    )
+    builder.add_node(
+        "action_agent",
+        create_action_node(action_llm, context),
+    )
+    builder.add_node(
+        "request_approval",
+        request_approval,
+    )
+    builder.add_node(
+        "book_event",
+        book_event,
+    )
 
     builder.add_edge(START, "triage_router")
 
     builder.add_conditional_edges(
         "triage_router",
         route_after_triage,
+        {
+            "action": "action_agent",
+            "end": END,
+        },
+    )
+
+    builder.add_conditional_edges(
+        "action_agent",
+        route_after_action,
         {
             "approval": "request_approval",
             "end": END,
@@ -125,8 +178,6 @@ def create_graph(triage_model: BaseChatModel | None = None):
     )
 
     builder.add_edge("book_event", END)
-
-    # 其余边保持原来的实现
 
     return builder.compile(
         checkpointer=InMemorySaver(),
